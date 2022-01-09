@@ -16,3 +16,6 @@
 - manually create a new db as user postgres for a new app
     - unsure how using docker volumes and/or alembic would alter this process
 - create a new user for the app with a password so that the app connection isn't via a superuser.
+- once the db is created, as a super user, grant privileges to all tables in schema public to the user
+created for the app
+    - something like 'GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO <user>;'
