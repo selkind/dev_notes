@@ -19,3 +19,5 @@
 - once the db is created, as a super user, grant privileges to all tables in schema public to the user
 created for the app
     - something like 'GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO <user>;'
+    
+### NOTE that the fastapi cookie cutter has a healthcheck defined by the command 'pg_isready -U <user>' This user needs to be consistent with the user defined by docker secrets.
