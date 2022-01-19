@@ -11,3 +11,13 @@ Docker secrets in my mind seem like the better option, but also overkill for my 
 and progress on the actual API...
 Note to self when you come back to switch to Docker secrets: you've been running into issues with getting the db_uri to load as a docker secret into the pydantic BaseSettings
 subclass (app/core/config.py)
+
+## Configuring RichHandler for logging in Docker-compose hosted python app
+So I found [this tutorial](https://blog.hay-kot.dev/fastapi-and-rich-tracebacks-in-development/) to configure RichHandler for colors in my log messages (and potentiall tracebacks too)
+I essentially copied and pasted the code (using a pydantic class instead of a dataclass) and adjusting the configuration settings to match my preferences.
+However, the stdout stream of docker-compose did not reflect any colorings even though the log format changed and the rich handler was definitely the logging handler.
+
+Turns out the parameter "tty" needs to be set to true in the **docker-compose.yml** file. The backend service (or whatever your service is named that runs fastapi) needs to have a line with *"tty: true"*. This worked immediately.
+Additionally, I learned that adding COLUMNS=120 as an environment variable in the .env file is something that the RichHandler will pick up on to increase the width of the logging message.
+
+There is still an issue where the docker compose log format leaves a bunch of space between the container name and the beginning of the log (where time is sometimes inserted). I will see if I can get rid of this.
