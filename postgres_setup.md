@@ -34,7 +34,7 @@ sql injection attacks, I do not want my web server to have super user privileges
 Based on a post within this discussion, I created a file within the docker-entrypoint-initdb.d directory
 that looks like this 
 
-```
+```bash
 #!/bin/sh
 
 set -e
