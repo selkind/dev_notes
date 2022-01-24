@@ -21,3 +21,38 @@ created for the app
     - something like 'GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO <user>;'
     
 ### NOTE that the fastapi cookie cutter has a healthcheck defined by the command 'pg_isready -U <user>' This user needs to be consistent with the user defined by docker secrets.
+
+## Postgres setup in docker-compose
+Shockingly, the default postgres image only sets up a single superuser for the database based on default values
+or the env vars POSTGRES_USER, POSTGRES_DB, and POSTGRES_PASSWORD.
+
+This is great for database administration, but terrible for web security. Ultimately I need a user with
+limited privileges that my web service can connect as for API queries. In order to mitigate the damage of
+sql injection attacks, I do not want my web server to have super user privileges (duh).
+[This github issue outlines the problem pretty clearly](https://github.com/docker-library/postgres/issues/175)
+
+Based on a post within this discussion, I created a file within the docker-entrypoint-initdb.d directory
+that looks like this 
+
+```
+#!/bin/sh
+
+set -e
+
+# get the postgres user or set it to a default value
+if [ -n $POSTGRES_USER ]; then pg_user=$POSTGRES_USER; else pg_user="postgres"; fi
+# get the postgres db or set it to a default value
+if [ -n $POSTGRES_DB ]; then pg_db=$POSTGRES_DB; else pg_db=$POSTGRES_USER; fi
+
+if [ -n "$POSTGRES_NON_ROOT_USER" ]; then
+psql -v ON_ERROR_STOP=1 --username "$pg_user" --dbname "$pg_db" <<-EOSQL
+    CREATE USER $POSTGRES_NON_ROOT_USER WITH encrypted password '$POSTGRES_NON_ROOT_USER_PASSWORD';
+    GRANT CREATE, CONNECT ON DATABASE $pg_db TO $POSTGRES_NON_ROOT_USER;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, UPDATE, INSERT, DELETE, REFERENCES ON TABLES TO
+    $POSTGRES_NON_ROOT_USER;
+EOSQL
+fi
+```
+
+This does exactly what I want. Uses two extra env vars to configure a user with the right level of privileges 
+for a web server.
